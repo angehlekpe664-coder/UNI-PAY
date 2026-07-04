@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniPay TP — Inscription Étudiant</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: linear-gradient(160deg, #EBF2FF 0%, #F8FAFF 60%); }
+    .register-wrap { min-height: 100vh; display: flex; flex-direction: column; }
+    .form-section { padding: 28px 24px 40px; flex: 1; }
+  </style>
+</head>
+<body>
+<div class="register-wrap">
+  <!-- Hero -->
+  <div class="hero-banner" style="text-align:center; padding: 32px 24px 24px;">
+    <span class="logo-icon">🎓</span>
+    <h1>UniPay TP</h1>
+    <p>Création de compte Étudiant</p>
+  </div>
+
+  <!-- Form -->
+  <div class="container">
+    <div class="form-section fade-in">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <a href="index.html" style="color:var(--text-light);font-size:22px;text-decoration:none">←</a>
+        <h2 style="font-size:20px;font-weight:800;color:var(--primary)">Formulaire d'Inscription</h2>
+      </div>
+
+      <form id="register-form" novalidate>
+        <div class="form-group">
+          <label class="form-label">Prénom</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input type="text" class="form-input" id="prenom" placeholder="Ex: Ange" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nom</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input type="text" class="form-input" id="nom" placeholder="Ex: HLEKPE" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Numéro Matricule</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🪪</span>
+            <input type="text" class="form-input" id="matricule" placeholder="Ex: 22A045" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adresse Email</label>
+          <div class="input-wrapper">
+            <span class="input-icon">📧</span>
+            <input type="email" class="form-input" id="email" placeholder="etudiant@uac.bj" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Filière &amp; Niveau</label>
+          <div class="input-wrapper">
+            <span class="input-icon" style="font-size: 16px;">📚</span>
+            <select class="form-input" id="filiere" style="padding-left: 44px; appearance: auto;" required>
+              <option value="MIA 1">MIA 1 (Mathématiques Informatique et Applications)</option>
+              <option value="MIA 2">MIA 2 (Mathématiques Informatique et Applications)</option>
+              <option value="PC 1">PC 1 (Physique et Chimie)</option>
+              <option value="PC 2">PC 2 (Physique et Chimie)</option>
+              <option value="CBG 1">CBG 1 (Chimie Biologie et Géologie)</option>
+              <option value="CBG 2">CBG 2 (Chimie Biologie et Géologie)</option>
+              <option value="ENT 1">ENTREPRENEURIAT 1</option>
+              <option value="ENT 2">ENTREPRENEURIAT 2</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input type="password" class="form-input" id="password" placeholder="Min. 6 caractères" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="register-btn" style="margin-top: 10px;">
+          <span id="register-btn-text">Créer mon compte</span>
+          <span>→</span>
+        </button>
+
+        <p style="text-align:center;font-size:13px;color:var(--text-secondary);margin-top:20px">
+          Déjà inscrit ? <a href="index.html" style="color:var(--primary);font-weight:600">Se connecter</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+  import { auth, db } from './js/firebase-config.js';
+  import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  window.showToast = (msg, type='') => {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    setTimeout(() => t.className = '', 3500);
+  };
+
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const prenom = document.getElementById('prenom').value.trim();
+    const nom = document.getElementById('nom').value.trim();
+    const matricule = document.getElementById('matricule').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const filiere = document.getElementById('filiere').value;
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('register-btn');
+
+    if (!prenom || !nom || !matricule || !email || !password) {
+      return showToast('Veuillez remplir tous les champs.', 'error');
+    }
+    if (password.length < 6) {
+      return showToast('Le mot de passe doit contenir au moins 6 caractères.', 'error');
+    }
+
+    btn.disabled = true;
+    document.getElementById('register-btn-text').innerHTML = '<div class="spinner" style="display:inline-block;vertical-align:middle"></div>';
+
+    try {
+      // 1. Créer le compte Firebase Auth
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // 2. Enregistrer les informations de profil dans Firestore
+      await setDoc(doc(db, 'users', cred.user.uid), {
+        prenom,
+        nom,
+        matricule,
+        email,
+        filiere,
+        solde: 0,
+        role: 'student',
+        createdAt: new Date()
+      });
+
+      showToast('Inscription réussie ! Redirection...', 'success');
+      setTimeout(() => {
+        window.location.href = 'pages/dashboard.html';
+      }, 1500);
+    } catch (err) {
+      showToast('Erreur : ' + err.message, 'error');
+      btn.disabled = false;
+      document.getElementById('register-btn-text').textContent = 'Créer mon compte';
+    }
+  });
+</script>
+</body>
+</html>

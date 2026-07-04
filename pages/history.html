@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>UniPay TP — Historique des paiements</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .filter-bar { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; margin-bottom:20px; }
+    .filter-bar::-webkit-scrollbar { display:none; }
+    .filter-chip { flex-shrink:0; padding:8px 16px; border-radius:20px; border:1.5px solid var(--border); background:white; font-size:13px; font-weight:600; color:var(--text-secondary); cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+    .filter-chip.active { background:var(--primary); color:white; border-color:var(--primary); }
+    .empty-state { text-align:center; padding:60px 20px; }
+    .empty-icon { font-size:64px; margin-bottom:16px; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-logo">🎓 UniPay TP</div>
+  <div class="nav-links">
+    <a href="dashboard.html" class="nav-link">🏠 Accueil</a>
+    <a href="payment.html" class="nav-link">💳 Payer TP</a>
+    <a href="scanner.html" class="nav-link">🤖 Scanner IA</a>
+    <a href="history.html" class="nav-link active">📋 Historique</a>
+    <a href="profile.html" class="nav-link">👤 Profil</a>
+  </div>
+  <div class="nav-avatar" id="nav-avatar">?</div>
+</nav>
+
+<div class="container-lg" style="padding-top:28px;padding-bottom:40px">
+
+  <!-- Header -->
+  <div style="margin-bottom:24px">
+    <h1 style="font-size:22px;font-weight:800;color:var(--primary)">📋 Historique des Paiements</h1>
+    <p style="font-size:14px;color:var(--text-secondary);margin-top:4px" id="history-subtitle">Chargement…</p>
+  </div>
+
+  <!-- Stats rapides -->
+  <div class="stats-grid" style="margin-bottom:28px">
+    <div class="stat-card">
+      <div class="stat-label">Total payé</div>
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-sub">Tous paiements confondus</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">TPs validés</div>
+      <div class="stat-value" id="stat-count">—</div>
+      <div class="stat-sub">Reçus vérifiés</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Dernier paiement</div>
+      <div class="stat-value" style="font-size:18px" id="stat-last">—</div>
+      <div class="stat-sub" id="stat-last-date">—</div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filter-bar">
+    <button class="filter-chip active" onclick="applyFilter('all', this)">Tous</button>
+    <button class="filter-chip" onclick="applyFilter('payment_direct', this)">💳 Paiements directs</button>
+    <button class="filter-chip" onclick="applyFilter('scan_ia', this)">🤖 Scans IA</button>
+  </div>
+
+  <!-- Liste -->
+  <div id="history-list">
+    <!-- Skeletons -->
+    <div style="height:72px;background:#E5E7EB;border-radius:12px;margin-bottom:10px;animation:pulse 1.5s infinite"></div>
+    <div style="height:72px;background:#E5E7EB;border-radius:12px;margin-bottom:10px;animation:pulse 1.5s infinite"></div>
+    <div style="height:72px;background:#E5E7EB;border-radius:12px;margin-bottom:10px;animation:pulse 1.5s infinite"></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="dashboard.html" class="bottom-nav-item">🏠<span>Accueil</span></a>
+    <a href="payment.html" class="bottom-nav-item">💳<span>Payer</span></a>
+    <a href="scanner.html" class="bottom-nav-item">🤖<span>Scanner</span></a>
+    <a href="history.html" class="bottom-nav-item active">📋<span>Historique</span></a>
+    <a href="profile.html" class="bottom-nav-item">👤<span>Profil</span></a>
+  </div>
+</nav>
+<div id="toast"></div>
+
+<script type="module">
+  import { auth, db } from '../js/firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  let allPayments = [];
+
+  window.showToast = (msg, type='') => {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'show ' + type;
+    setTimeout(() => t.className = '', 3500);
+  };
+
+  window.applyFilter = (type, el) => {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    const filtered = type === 'all' ? allPayments : allPayments.filter(p => p.type === type);
+    renderList(filtered);
+  };
+
+  function renderList(payments) {
+    const el = document.getElementById('history-list');
+    if (payments.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px">Aucun paiement trouvé</div>
+        <div style="font-size:14px;color:var(--text-secondary)">Effectuez votre premier paiement ou scan IA.</div>
+        <a href="payment.html" class="btn btn-primary" style="margin-top:20px;max-width:200px">Payer un TP</a></div>`;
+      return;
+    }
+    el.innerHTML = payments.map(p => {
+      const ts = p.timestamp?.toDate ? p.timestamp.toDate() : new Date();
+      const dateStr = ts.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+      const timeStr = ts.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const isIA = p.type === 'scan_ia';
+      const isDirect = p.type === 'payment_direct';
+      const iconBg = isIA ? 'var(--success-light)' : 'var(--primary-light)';
+      const icon = isIA ? '🤖' : '💳';
+      return `<div class="activity-item" style="border:1px solid var(--border);margin-bottom:8px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+        <div class="activity-icon" style="background:${iconBg}">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div class="activity-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.tpTitle || 'TP Validé'}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+            <span class="activity-date">${dateStr} à ${timeStr}</span>
+            <span class="badge ${isIA ? 'badge-success' : 'badge-primary'}" style="font-size:10px">${isIA ? '🤖 IA' : '💳 Direct'}</span>
+            ${p.verified ? '<span class="badge badge-success" style="font-size:10px">✅ Vérifié</span>' : ''}
+          </div>
+          ${p.transactionId ? `<div style="font-size:11px;color:var(--text-light);margin-top:2px">ID: ${p.transactionId}</div>` : ''}
+        </div>
+        <div class="activity-amount" style="color:var(--danger);flex-shrink:0">- ${p.amount || '—'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return window.location.href = '../index.html';
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    const d = snap.data() || {};
+    const initials = ((d.prenom?.[0]||'')+(d.nom?.[0]||'')).toUpperCase()||'?';
+    document.getElementById('nav-avatar').textContent = initials;
+
+    const q = query(collection(db, 'payments'), where('userId','==',user.uid), orderBy('timestamp','desc'));
+    const paysSnap = await getDocs(q);
+    allPayments = paysSnap.docs.map(d => d.data());
+
+    // Stats
+    const total = allPayments.reduce((sum, p) => {
+      const n = parseInt((p.amount || '0').replace(/[^0-9]/g,'')) || 0;
+      return sum + n;
+    }, 0);
+    document.getElementById('stat-total').textContent = total.toLocaleString('fr-FR') + ' FCFA';
+    document.getElementById('stat-count').textContent = allPayments.filter(p => p.verified).length;
+    if (allPayments.length > 0) {
+      const last = allPayments[0];
+      const ts = last.timestamp?.toDate ? last.timestamp.toDate() : new Date();
+      document.getElementById('stat-last').textContent = last.tpTitle?.split(' ').slice(0,2).join(' ') || '—';
+      document.getElementById('stat-last-date').textContent = ts.toLocaleDateString('fr-FR');
+    }
+    document.getElementById('history-subtitle').textContent = `${allPayments.length} transaction(s) enregistrée(s)`;
+    renderList(allPayments);
+  });
+</script>
+</body>
+</html>

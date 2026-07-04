@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>UniPay TP — Mon Profil</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .avatar-large {
+      width:84px; height:84px; border-radius:50%;
+      background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+      color:white; font-size:32px; font-weight:800;
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 12px; box-shadow:0 8px 24px rgba(0,86,210,0.3);
+    }
+    .profile-header { text-align:center; padding:32px 24px 20px; background:linear-gradient(160deg,#EBF2FF,var(--white)); border-radius:0 0 32px 32px; margin-bottom:24px; }
+    .info-row { display:flex; align-items:center; gap:14px; padding:14px 16px; border-bottom:1px solid var(--border); }
+    .info-row:last-child { border-bottom:none; }
+    .info-icon { width:38px; height:38px; border-radius:50%; background:var(--primary-light); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+    .info-label { font-size:12px; color:var(--text-secondary); }
+    .info-value { font-size:15px; font-weight:600; margin-top:1px; }
+    .action-row { display:flex; align-items:center; justify-content:space-between; padding:16px; cursor:pointer; border-radius:12px; transition:background 0.2s; }
+    .action-row:hover { background:var(--bg); }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-logo">🎓 UniPay TP</div>
+  <div class="nav-links">
+    <a href="dashboard.html" class="nav-link">🏠 Accueil</a>
+    <a href="payment.html" class="nav-link">💳 Payer TP</a>
+    <a href="scanner.html" class="nav-link">🤖 Scanner IA</a>
+    <a href="history.html" class="nav-link">📋 Historique</a>
+    <a href="profile.html" class="nav-link active">👤 Profil</a>
+  </div>
+  <div class="nav-avatar" id="nav-avatar">?</div>
+</nav>
+
+<!-- Profile Header -->
+<div class="profile-header fade-in">
+  <div class="avatar-large" id="profile-avatar">?</div>
+  <div style="font-size:22px;font-weight:800" id="profile-name">Chargement…</div>
+  <div style="font-size:14px;color:var(--text-secondary);margin-top:4px" id="profile-filiere">—</div>
+  <div style="margin-top:12px">
+    <span class="badge badge-primary" id="profile-matricule">—</span>
+  </div>
+  <!-- Solde card -->
+  <div style="display:inline-flex;align-items:center;gap:8px;background:white;border-radius:16px;padding:10px 20px;margin-top:16px;box-shadow:var(--shadow)">
+    <span style="font-size:20px">💰</span>
+    <div style="text-align:left">
+      <div style="font-size:11px;color:var(--text-secondary)">Solde disponible</div>
+      <div style="font-size:20px;font-weight:800;color:var(--primary)" id="profile-solde">0 FCFA</div>
+    </div>
+  </div>
+</div>
+
+<div class="container-lg" style="max-width:600px;padding-bottom:40px">
+
+  <!-- Informations personnelles -->
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:16px 20px;background:var(--bg);border-bottom:1px solid var(--border)">
+      <span style="font-size:15px;font-weight:700">📋 Informations personnelles</span>
+    </div>
+    <div id="info-block">
+      <div class="info-row">
+        <div class="info-icon">👤</div>
+        <div><div class="info-label">Nom complet</div><div class="info-value" id="info-name">—</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">📧</div>
+        <div><div class="info-label">Email</div><div class="info-value" id="info-email">—</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">🪪</div>
+        <div><div class="info-label">Matricule</div><div class="info-value" id="info-matricule">—</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">📚</div>
+        <div><div class="info-label">Filière</div><div class="info-value" id="info-filiere">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modifier mot de passe -->
+  <div class="card" style="padding:0;overflow:hidden;margin-top:16px">
+    <div style="padding:16px 20px;background:var(--bg);border-bottom:1px solid var(--border)">
+      <span style="font-size:15px;font-weight:700">🔐 Sécurité</span>
+    </div>
+    <div id="pwd-form-section" style="padding:20px">
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Nouveau mot de passe</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input type="password" class="form-input" id="new-pwd" placeholder="Min. 6 caractères">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Confirmer le mot de passe</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input type="password" class="form-input" id="confirm-pwd" placeholder="Répétez le mot de passe">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="changePassword()" id="pwd-btn">
+        <span id="pwd-btn-text">Modifier le mot de passe</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card" style="padding:0;overflow:hidden;margin-top:16px">
+    <div class="action-row" onclick="window.location.href='history.html'">
+      <div style="display:flex;align-items:center;gap:12px;font-weight:600">
+        <span style="font-size:22px">📋</span> Historique des paiements
+      </div>
+      <span style="color:var(--text-light)">›</span>
+    </div>
+    <div style="border-top:1px solid var(--border)"></div>
+    <div class="action-row" onclick="window.location.href='scanner.html'">
+      <div style="display:flex;align-items:center;gap:12px;font-weight:600">
+        <span style="font-size:22px">🤖</span> Scanner un reçu IA
+      </div>
+      <span style="color:var(--text-light)">›</span>
+    </div>
+    <div style="border-top:1px solid var(--border)"></div>
+    <div class="action-row" onclick="signOut()" style="color:var(--danger)">
+      <div style="display:flex;align-items:center;gap:12px;font-weight:600">
+        <span style="font-size:22px">🚪</span> Se déconnecter
+      </div>
+      <span style="color:var(--text-light)">›</span>
+    </div>
+  </div>
+
+  <p style="text-align:center;font-size:12px;color:var(--text-light);margin-top:24px">UniPay TP v2.0 — © 2024 UAC Faculté des Sciences</p>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="dashboard.html" class="bottom-nav-item">🏠<span>Accueil</span></a>
+    <a href="payment.html" class="bottom-nav-item">💳<span>Payer</span></a>
+    <a href="scanner.html" class="bottom-nav-item">🤖<span>Scanner</span></a>
+    <a href="history.html" class="bottom-nav-item">📋<span>Historique</span></a>
+    <a href="profile.html" class="bottom-nav-item active">👤<span>Profil</span></a>
+  </div>
+</nav>
+<div id="toast"></div>
+
+<script type="module">
+  import { auth, db } from '../js/firebase-config.js';
+  import { onAuthStateChanged, signOut as firebaseSignOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  window.showToast = (msg, type='') => {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'show ' + type;
+    setTimeout(() => t.className = '', 3500);
+  };
+
+  window.signOut = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) return;
+    await firebaseSignOut(auth);
+    window.location.href = '../index.html';
+  };
+
+  window.changePassword = async () => {
+    const pwd = document.getElementById('new-pwd').value;
+    const confirm = document.getElementById('confirm-pwd').value;
+    if (!pwd || pwd.length < 6) return showToast('Mot de passe trop court (min. 6 caractères).', 'error');
+    if (pwd !== confirm) return showToast('Les mots de passe ne correspondent pas.', 'error');
+    const btn = document.getElementById('pwd-btn');
+    btn.disabled = true;
+    document.getElementById('pwd-btn-text').innerHTML = '<div class="spinner" style="display:inline-block;vertical-align:middle"></div>';
+    try {
+      await updatePassword(auth.currentUser, pwd);
+      showToast('Mot de passe modifié avec succès !', 'success');
+      document.getElementById('new-pwd').value = '';
+      document.getElementById('confirm-pwd').value = '';
+    } catch (e) {
+      showToast('Erreur : ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      document.getElementById('pwd-btn-text').textContent = 'Modifier le mot de passe';
+    }
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return window.location.href = '../index.html';
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    const d = snap.data() || {};
+    const fullName = `${d.prenom || ''} ${d.nom || ''}`.trim();
+    const initials = ((d.prenom?.[0]||'')+(d.nom?.[0]||'')).toUpperCase()||'?';
+    const solde = (d.solde ?? 0).toLocaleString('fr-FR');
+
+    document.getElementById('nav-avatar').textContent = initials;
+    document.getElementById('profile-avatar').textContent = initials;
+    document.getElementById('profile-name').textContent = fullName || 'Étudiant';
+    document.getElementById('profile-filiere').textContent = d.filiere || '—';
+    document.getElementById('profile-matricule').textContent = `📌 ${d.matricule || '—'}`;
+    document.getElementById('profile-solde').textContent = solde + ' FCFA';
+    document.getElementById('info-name').textContent = fullName || '—';
+    document.getElementById('info-email').textContent = d.email || user.email || '—';
+    document.getElementById('info-matricule').textContent = d.matricule || '—';
+    document.getElementById('info-filiere').textContent = d.filiere || '—';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniPay TP — Tableau de bord</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .balance-badge { font-size: 32px; font-weight: 800; color: white; }
+    .balance-label { font-size: 14px; color: rgba(255,255,255,0.75); }
+    .recharge-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.2); color: white;
+      border: none; border-radius: 20px; padding: 8px 18px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .recharge-btn:hover { background: rgba(255,255,255,0.3); }
+    .page-content { padding: 24px 0 20px; }
+  </style>
+</head>
+<body>
+<!-- Top Nav -->
+<nav class="navbar">
+  <div class="nav-logo">🎓 UniPay TP</div>
+  <div class="nav-links">
+    <a href="dashboard.html" class="nav-link active"><span class="icon">🏠</span> Accueil</a>
+    <a href="payment.html" class="nav-link"><span class="icon">💳</span> Payer TP</a>
+    <a href="scanner.html" class="nav-link"><span class="icon">🤖</span> Scanner IA</a>
+    <a href="history.html" class="nav-link"><span class="icon">📋</span> Historique</a>
+    <a href="profile.html" class="nav-link"><span class="icon">👤</span> Profil</a>
+  </div>
+  <div class="nav-avatar" id="nav-avatar" title="Profil">?</div>
+</nav>
+
+<!-- Hero Banner -->
+<div class="hero-banner">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <div class="balance-label" id="greeting">Bonjour,</div>
+      <div class="balance-badge" id="balance">0 FCFA</div>
+      <div style="color:rgba(255,255,255,0.6);font-size:12px;margin-top:4px" id="filiere-badge">— FCFA</div>
+    </div>
+    <button class="recharge-btn" onclick="showToast('Rechargement non disponible dans cette version.', '')">
+      ➕ Recharger
+    </button>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="container-lg page-content">
+
+  <!-- TPs prioritaires -->
+  <div class="section-header">
+    <span class="section-title">TPs prioritaires</span>
+    <span class="section-link" onclick="window.location.href='payment.html'">Payer un TP</span>
+  </div>
+  <div class="tp-cards-scroll" id="tp-cards">
+    <!-- skeleton -->
+    <div style="flex-shrink:0;width:160px;height:180px;background:#E5E7EB;border-radius:24px;animation:pulse 1.5s infinite"></div>
+    <div style="flex-shrink:0;width:160px;height:180px;background:#E5E7EB;border-radius:24px;animation:pulse 1.5s infinite"></div>
+    <div style="flex-shrink:0;width:160px;height:180px;background:#E5E7EB;border-radius:24px;animation:pulse 1.5s infinite"></div>
+  </div>
+
+  <!-- Action Cards -->
+  <div class="action-cards" style="margin-top:32px">
+    <div class="action-card" style="background:linear-gradient(135deg,#0056D2,#003D99)">
+      <div class="action-card-icon">💳</div>
+      <div><div class="action-card-label">Payer TP</div><div class="action-card-sub">Règlement rapide</div></div>
+      <button class="btn-white" onclick="window.location.href='payment.html'" style="color:#0056D2">Payer</button>
+    </div>
+    <div class="action-card" style="background:linear-gradient(135deg,#0D9488,#0F766E)">
+      <div class="action-card-icon">🤖</div>
+      <div><div class="action-card-label">Scanner IA</div><div class="action-card-sub">Vérifier quittance</div></div>
+      <button class="btn-white" onclick="window.location.href='scanner.html'" style="color:#0D9488">Scanner</button>
+    </div>
+  </div>
+
+  <!-- Dernières activités -->
+  <div class="section-header" style="margin-top:32px">
+    <span class="section-title">Dernières activités</span>
+    <span class="section-link" onclick="window.location.href='history.html'">Historique</span>
+  </div>
+  <div id="activities-list">
+    <div style="height:64px;background:#E5E7EB;border-radius:12px;margin-bottom:10px;animation:pulse 1.5s infinite"></div>
+    <div style="height:64px;background:#E5E7EB;border-radius:12px;margin-bottom:10px;animation:pulse 1.5s infinite"></div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="dashboard.html" class="bottom-nav-item active"><span class="nav-icon">🏠</span>Accueil</a>
+    <a href="payment.html" class="bottom-nav-item"><span class="nav-icon">💳</span>Payer</a>
+    <a href="scanner.html" class="bottom-nav-item"><span class="nav-icon">🤖</span>Scanner</a>
+    <a href="history.html" class="bottom-nav-item"><span class="nav-icon">📋</span>Historique</a>
+    <a href="profile.html" class="bottom-nav-item"><span class="nav-icon">👤</span>Profil</a>
+  </div>
+</nav>
+
+<div id="toast"></div>
+
+<script type="module">
+  import { auth, db } from '../js/firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const TP_DATA = {
+    'MIA 1': [{title:'Physique Expérimental',code:'PHY1121',price:'2.500 FCFA',color:'#9333EA',icon:'⚡'}],
+    'MIA 2': [{title:'Physique Expérimental',code:'PHY1121',price:'2.500 FCFA',color:'#9333EA',icon:'⚡'},{title:'Mécanique Expérimental',code:'PHY1322',price:'2.500 FCFA',color:'#EA580C',icon:'🔧'},{title:'LaTeX',code:'INF1422',price:'1.500 FCFA',color:'#4F46E5',icon:'📝'},{title:'Python & Scilab',code:'INF1421',price:'1.500 FCFA',color:'#2563EB',icon:'💻'}],
+    'PC 1': [{title:'Mécanique et Électricité',code:'PHY1225-1',price:'2.500 FCFA',color:'#7C3AED',icon:'⚡'},{title:'Optique',code:'PHY1225-2',price:'2.500 FCFA',color:'#9333EA',icon:'🔆'},{title:'Chimie Générale',code:'CHM1226-1',price:'2.500 FCFA',color:'#0D9488',icon:'🧪'},{title:'Chimie Minérale',code:'CHM1226-2',price:'2.500 FCFA',color:'#0891B2',icon:'🧬'},{title:'Chimie Organique',code:'CHM1226-3',price:'2.500 FCFA',color:'#16A34A',icon:'🌿'},{title:'Informatique',code:'INF1120',price:'1.500 FCFA',color:'#2563EB',icon:'💻'}],
+    'PC 2': [{title:'Chimie Organique Descriptif',code:'CHM1321',price:'2.500 FCFA',color:'#16A34A',icon:'🧪'},{title:'Chimie des Matériaux',code:'CHM1323',price:'2.500 FCFA',color:'#EA580C',icon:'🔩'},{title:'Chimie des Solutions',code:'CHM1325',price:'2.500 FCFA',color:'#0D9488',icon:'💧'},{title:'Électronique',code:'PHY1426-2',price:'3.000 FCFA',color:'#7C3AED',icon:'🔌'},{title:'Thermodynamique',code:'PHY1426-3',price:'3.000 FCFA',color:'#DC2626',icon:'🔥'}],
+    'CBG 1': [{title:'Biologie Cellulaire',code:'BIO-101',price:'2.500 FCFA',color:'#16A34A',icon:'🌿'},{title:'Géologie Générale',code:'GEO-101',price:'2.000 FCFA',color:'#92400E',icon:'🌍'}],
+    'CBG 2': [{title:'Biologie Cellulaire',code:'BIO-101',price:'2.500 FCFA',color:'#16A34A',icon:'🌿'},{title:'Géologie Générale',code:'GEO-101',price:'2.000 FCFA',color:'#92400E',icon:'🌍'},{title:'Physiologie Animale',code:'BIO-201',price:'2.500 FCFA',color:'#DC2626',icon:'❤️'},{title:'Biochimie Structurale',code:'BIO-202',price:'3.000 FCFA',color:'#64748B',icon:'🧪'}],
+    'ENT 1': [{title:"Création d'Entreprise",code:'ENT-101',price:'1.500 FCFA',color:'#EA580C',icon:'💼'},{title:'Marketing & Vente',code:'ENT-102',price:'1.000 FCFA',color:'#0D9488',icon:'📈'}],
+    'ENT 2': [{title:"Création d'Entreprise",code:'ENT-101',price:'1.500 FCFA',color:'#EA580C',icon:'💼'},{title:'Marketing & Vente',code:'ENT-102',price:'1.000 FCFA',color:'#0D9488',icon:'📈'},{title:'Gestion de Projet',code:'ENT-201',price:'2.000 FCFA',color:'#9333EA',icon:'🚀'},{title:'Comptabilité de Base',code:'ENT-202',price:'2.500 FCFA',color:'#2563EB',icon:'📊'}],
+  };
+
+  function getTPsForFiliere(f) {
+    return TP_DATA[f] || TP_DATA['MIA 1'] || [];
+  }
+
+  window.showToast = (msg, type='') => {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    setTimeout(() => t.className = '', 3500);
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return window.location.href = '../index.html';
+
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    const data = snap.data() || {};
+    const prenom = data.prenom || '';
+    const nom = data.nom || '';
+    const filiere = data.filiere || 'MIA 1';
+    const solde = data.solde ?? 0;
+    const initials = ((prenom[0] || '') + (nom[0] || '')).toUpperCase() || '?';
+
+    document.getElementById('greeting').textContent = `Bonjour, ${prenom} ${nom}`;
+    document.getElementById('balance').textContent = `${solde.toLocaleString('fr-FR')} FCFA`;
+    document.getElementById('filiere-badge').textContent = `Filière : ${filiere}`;
+    document.getElementById('nav-avatar').textContent = initials;
+
+    // Load payments
+    const paysSnap = await getDocs(query(
+      collection(db, 'payments'),
+      where('userId', '==', user.uid),
+      orderBy('timestamp', 'desc'),
+      limit(10)
+    ));
+    const payments = paysSnap.docs.map(d => d.data());
+
+    // Render TP Cards
+    const tps = getTPsForFiliere(filiere);
+    const cardsEl = document.getElementById('tp-cards');
+    cardsEl.innerHTML = '';
+    if (tps.length === 0) {
+      cardsEl.innerHTML = '<p style="color:var(--text-light);font-size:14px">Aucun TP disponible pour votre filière.</p>';
+    } else {
+      tps.forEach(tp => {
+        const paid = payments.find(p => p.tpCode === tp.code && p.verified === true);
+        cardsEl.innerHTML += `
+          <div class="tp-card" onclick="${paid ? `window.location.href='history.html'` : `window.location.href='payment.html?code=${tp.code}&title=${encodeURIComponent(tp.title)}&price=${encodeURIComponent(tp.price)}'`}">
+            <div class="tp-icon" style="background:${tp.color}20;color:${tp.color}">${tp.icon}</div>
+            ${paid ? `<div class="tp-paid-badge">✓</div>` : ''}
+            <div class="tp-code" style="color:${tp.color}">${tp.code}</div>
+            <div class="tp-title">${tp.title}</div>
+            <div class="tp-price" style="color:${paid ? 'var(--success)' : 'var(--text-secondary)'}">
+              ${paid ? '✅ Payé' : tp.price}
+            </div>
+          </div>`;
+      });
+    }
+
+    // Render activities
+    const actEl = document.getElementById('activities-list');
+    if (payments.length === 0) {
+      actEl.innerHTML = '<div class="card" style="text-align:center;color:var(--text-light);font-size:14px">Aucune activité récente.</div>';
+    } else {
+      actEl.innerHTML = payments.slice(0, 3).map(p => {
+        const ts = p.timestamp?.toDate ? p.timestamp.toDate() : new Date();
+        const dateStr = `${ts.getDate()}/${ts.getMonth()+1}/${ts.getFullYear()}`;
+        const isDirect = p.type === 'payment_direct';
+        const color = isDirect ? 'var(--primary)' : 'var(--success)';
+        return `<div class="activity-item">
+          <div class="activity-icon" style="background:${isDirect?'var(--primary-light)':'var(--success-light)'}">
+            ${isDirect ? '💳' : '🤖'}
+          </div>
+          <div>
+            <div class="activity-title">${p.tpTitle || 'TP Validé'}</div>
+            <div class="activity-date">${dateStr}</div>
+          </div>
+          <div class="activity-amount" style="color:${color}">- ${p.amount || '0 FCFA'}</div>
+        </div>`;
+      }).join('');
+    }
+  });
+</script>
+</body>
+</html>
