@@ -1,215 +1,38 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/UNI-PAY/">
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UniPay TP — Connexion | UAC Faculté des Sciences</title>
-  <meta name="description" content="Connectez-vous à UniPay TP pour gérer vos paiements de travaux pratiques à l'UAC.">
-  <link rel="stylesheet" href="css/style.css">
-  <style>
-    body { background: linear-gradient(160deg, #EBF2FF 0%, #F8FAFF 60%); }
-    .login-wrap { min-height: 100vh; display: flex; flex-direction: column; }
-    .form-section { padding: 28px 24px 40px; flex: 1; }
-    .security-footer { text-align: center; padding: 12px; font-size: 12px; color: var(--success); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
-  </style>
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="fastnew">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>fastnew</title>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-<div class="login-wrap">
-  <!-- Hero -->
-  <div class="hero-banner" style="text-align:center">
-    <span class="logo-icon">🎓</span>
-    <h1>UniPay TP</h1>
-    <p>UAC — Faculté des Sciences et Techniques</p>
-  </div>
-
-  <!-- Form -->
-  <div class="container">
-    <div class="form-section fade-in">
-      <h2 style="font-size:22px;font-weight:800;color:var(--primary);margin-bottom:6px" id="form-title">Identifiants Académiques</h2>
-      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:22px" id="form-subtitle">Accédez à la plateforme UniPay de la Faculté des Sciences.</p>
-
-      <!-- Mode Switch -->
-      <div class="mode-toggle" id="mode-toggle">
-        <button class="mode-btn active" id="btn-student" onclick="setMode('student')">🎒 Étudiant</button>
-        <button class="mode-btn" id="btn-admin" onclick="setMode('admin')">🛡️ Administrateur</button>
-      </div>
-
-      <form id="login-form" novalidate>
-        <div class="form-group">
-          <label class="form-label" id="id-label">Numéro Matricule</label>
-          <div class="input-wrapper">
-            <span class="input-icon" id="id-icon">🪪</span>
-            <input type="text" class="form-input" id="identifier" placeholder="Ex: 22A045" autocomplete="username" required>
-          </div>
-          <div class="form-error" id="identifier-error"></div>
-        </div>
-
-        <div class="form-group">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <label class="form-label" style="margin:0">Mot de passe</label>
-            <button type="button" style="background:none;border:none;font-size:12px;color:var(--primary);font-weight:600;cursor:pointer" onclick="showForgotPassword()">Oublié ?</button>
-          </div>
-          <div class="input-wrapper">
-            <span class="input-icon">🔒</span>
-            <input type="password" class="form-input" id="password" placeholder="••••••••" autocomplete="current-password" required>
-            <span class="input-suffix" onclick="togglePwd()" id="pwd-eye">👁️</span>
-          </div>
-          <div class="form-error" id="password-error"></div>
-        </div>
-
-        <button type="submit" class="btn btn-primary" id="login-btn">
-          <span id="login-btn-text">Se connecter</span>
-          <span>→</span>
-        </button>
-
-        <div id="guest-section" style="margin-top:16px">
-          <a href="register.html" class="btn btn-outline">Accès Invité / Inscription</a>
-        </div>
-      </form>
-    </div>
-
-    <div class="security-footer">
-      <span>🛡️</span> PAIEMENT SÉCURISÉ &amp; CHIFFRÉ
-    </div>
-    <p style="text-align:center;font-size:11px;color:var(--text-light);padding-bottom:20px">© 2024 Université d'Abomey-Calavi</p>
-  </div>
-</div>
-
-<!-- Forgot Password Modal -->
-<div id="forgot-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;border-radius:24px;padding:28px;max-width:400px;width:100%">
-    <h3 style="font-size:18px;font-weight:700;margin-bottom:8px">🔑 Réinitialisation</h3>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px">Entrez l'email associé à votre compte pour recevoir un lien de réinitialisation.</p>
-    <div class="form-group">
-      <div class="input-wrapper">
-        <span class="input-icon">📧</span>
-        <input type="email" class="form-input" id="reset-email" placeholder="votre@email.com">
-      </div>
-    </div>
-    <div style="display:flex;gap:12px">
-      <button class="btn btn-outline btn-sm" onclick="hideForgotPassword()" style="flex:1;padding:12px">Annuler</button>
-      <button class="btn btn-primary btn-sm" onclick="sendResetEmail()" id="reset-btn" style="flex:1;padding:12px">Envoyer</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script type="module">
-  import { auth, db } from './js/firebase-config.js';
-  import { signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { collection, query, where, limit, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-  // Redirect if already logged in
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      const data = snap.data();
-      if (data?.role === 'admin' || data?.isAdmin) {
-        window.location.href = 'pages/admin.html';
-      } else {
-        window.location.href = 'pages/dashboard.html';
-      }
-    }
-  });
-
-  let isAdmin = false;
-  window.setMode = (mode) => {
-    isAdmin = mode === 'admin';
-    document.getElementById('btn-student').classList.toggle('active', !isAdmin);
-    document.getElementById('btn-admin').classList.toggle('active', isAdmin);
-    document.getElementById('id-label').textContent = isAdmin ? 'Email Administrateur' : 'Numéro Matricule';
-    document.getElementById('identifier').placeholder = isAdmin ? 'admin@uac.bj' : 'Ex: 22A045';
-    document.getElementById('id-icon').textContent = isAdmin ? '📧' : '🪪';
-    document.getElementById('form-title').textContent = isAdmin ? 'Espace Administration' : 'Identifiants Académiques';
-    document.getElementById('form-subtitle').textContent = isAdmin
-      ? "Authentifiez-vous pour gérer les transactions."
-      : "Accédez à la plateforme UniPay de la Faculté des Sciences.";
-    document.getElementById('guest-section').style.display = isAdmin ? 'none' : 'block';
-    document.getElementById('identifier').value = '';
-    document.getElementById('password').value = '';
-  };
-
-  window.togglePwd = () => {
-    const inp = document.getElementById('password');
-    const eye = document.getElementById('pwd-eye');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-    eye.textContent = inp.type === 'password' ? '👁️' : '🙈';
-  };
-
-  window.showForgotPassword = () => {
-    document.getElementById('forgot-modal').style.display = 'flex';
-  };
-  window.hideForgotPassword = () => {
-    document.getElementById('forgot-modal').style.display = 'none';
-  };
-
-  window.sendResetEmail = async () => {
-    const email = document.getElementById('reset-email').value.trim();
-    if (!email) return showToast('Veuillez entrer votre email.', 'error');
-    const btn = document.getElementById('reset-btn');
-    btn.innerHTML = '<div class="spinner" style="margin:0 auto"></div>';
-    btn.disabled = true;
-    try {
-      await sendPasswordResetEmail(auth, email);
-      hideForgotPassword();
-      showToast('Email de réinitialisation envoyé !', 'success');
-    } catch (e) {
-      showToast('Erreur : ' + e.message, 'error');
-    } finally {
-      btn.innerHTML = 'Envoyer'; btn.disabled = false;
-    }
-  };
-
-  document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const identifier = document.getElementById('identifier').value.trim();
-    const password = document.getElementById('password').value;
-    const btn = document.getElementById('login-btn');
-
-    if (!identifier) return showToast(isAdmin ? 'Veuillez entrer votre email.' : 'Veuillez entrer votre matricule.', 'error');
-    if (!password || password.length < 6) return showToast('Mot de passe trop court.', 'error');
-
-    btn.disabled = true;
-    document.getElementById('login-btn-text').innerHTML = '<div class="spinner" style="display:inline-block;vertical-align:middle"></div>';
-
-    try {
-      let email = identifier;
-      if (!isAdmin) {
-        const q = query(collection(db, 'users'), where('matricule', '==', identifier), limit(1));
-        const snap = await getDocs(q);
-        if (snap.empty) throw new Error('Matricule non enregistré ou incorrect.');
-        email = snap.docs[0].data().email;
-      }
-
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      const userSnap = await getDoc(doc(db, 'users', cred.user.uid));
-      const userData = userSnap.data();
-      const adminFlag = userData?.role === 'admin' || userData?.isAdmin === true;
-
-      if (isAdmin && !adminFlag) {
-        await auth.signOut();
-        throw new Error("Accès refusé. Ce compte n'a pas de droits d'administration.");
-      }
-
-      showToast(adminFlag ? 'Connexion Administrateur réussie !' : 'Connexion réussie !', 'success');
-      setTimeout(() => {
-        window.location.href = adminFlag ? 'pages/admin.html' : 'pages/dashboard.html';
-      }, 800);
-    } catch (err) {
-      showToast('Erreur : ' + err.message, 'error');
-      btn.disabled = false;
-      document.getElementById('login-btn-text').textContent = 'Se connecter';
-    }
-  });
-
-  window.showToast = (msg, type='') => {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'show ' + type;
-    setTimeout(() => t.className = '', 3500);
-  };
-</script>
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
